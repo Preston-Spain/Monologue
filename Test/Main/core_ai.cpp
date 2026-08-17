@@ -4,7 +4,7 @@ using namespace std;
 #include <cmath>
 #include <iostream>
 #include <fstream>
-#include "Util.cpp"
+#include "Util.h"
 
 class StateStreamTransformer {
 public:
@@ -60,55 +60,79 @@ public:
         return connections;
     }
 
-    void init() {
-		int indexer = 0;
-		string text;
-		for (string fileString : Util.CSVfileDir + Util.CSVfileActivationPoint, Util.CSVfileConnection, Util.CSVfileNeuron, Util.CSVfileSpikingNeuron) {
-			fstream file(fileString);
-			if (file.fail()) {
-				cout << "File " + fileString + " does not exist" << endl;
-			} else {
-				getline (file, text);
-				string split_view[] = text | std::views::split(','); // 0,0.0f,1$2$3$4
+        void init() {
+        int indexer = 0;
 
-				switch (indexer) {
-				case 0: // ActivationPoint
-					ActivationPoint* ap;
-					ap.ID = stoi(split_view[0]); // @var ID
-					ap.threshold = stof(split_view[1]); // @var threshold
+        // FIX: braces make this a real list of 4 filenames.
+        // The comma version only ever iterated over the LAST one.
+        for (const string& fileName : { util.CSVfileActivationPoint,
+                                        util.CSVfileConnection,
+                                        util.CSVfileNeuron,
+                                        util.CSVfileSpikingNeuron }) {
 
-					ActivationPointInitalized.push_back(*ap);
-					delete ap;
-					break;
-				case 1: // Connection
-					Connection* c;
-					c.ID = (split_view[0]); // @var ID
-					c.weight = (split_view[1]); // @var weight
-					ConnectionsInitalized.push_back(*c);
-					delete c;
-					break;
-				case 2: // Neuron
-					Neuron* n;
-					n.ID = (split_view[0]); // @var ID
-					n.threshold = (split_view[1]); // @var threshold
-					NeuronInitalized.push_back(*n);
-					delete n;
-					break;
-				case 3: // SpikingNeuron
-					SpikingNeuron* sn;
-					sn.ID = (split_view[0]); // @var ID
-					SpikingNeuronInitalized.push_back(*sn);
-					delete sn;
-					break;
-				default:
-					cout << "Invalid file index" << endl;
-					break;
-				}
-			}
-			indexer++;
-			file.close();
-		}
+            // FIX: join directory + filename with a separator
+            fstream file(util.CSVfileDir + "\\" + fileName);
+            if (file.fail()) {
+                cout << "File " + fileName + " does not exist" << endl;
+                indexer++;
+                continue;
+            }
+
+            string text;
+            // FIX: read EVERY line, not just the first
+            while (getline(file, text)) {
+                if (text.empty()) continue;
+
+                vector<string> split_view = splitCSV(text);
+
+                switch (indexer) {
+                case 0: { // ActivationPoint — FIX: braces around each case
+                    // FIX: stack object, not an uninitialized pointer.
+                    // "ActivationPoint* ap;" pointed at garbage; writing to it
+                    // and then delete-ing it is an instant crash.
+                    ActivationPoint ap;
+                    ap.ID        = stoi(split_view[0]);
+                    ap.threshold = stof(split_view[1]);
+                    ActivationPointInitalized.push_back(ap);
+                    break;
+                }
+                case 1: { // Connection
+                    Connection c;
+                    c.ID     = stoi(split_view[0]);   // FIX: stoi/stof were missing
+                    c.weight = stof(split_view[1]);
+                    // columns 2+ would be your neuron ID lists, e.g. "1$2$3"
+                    ConnectionsInitalized.push_back(c);
+                    break;
+                }
+                case 2: { // Neuron
+                    Neuron n;
+                    n.ID        = stoi(split_view[0]);
+                    n.threshold = stof(split_view[1]);
+                    NeuronInitalized.push_back(n);
+                    break;
+                }
+                case 3: { // SpikingNeuron
+                    SpikingNeuron sn;
+                    sn.ID = stoi(split_view[0]);
+                    SpikingNeuronInitalized.push_back(sn);
+                    break;
+                }
+                default:
+                    cout << "Invalid file index" << endl;
+                    break;
+                }
+            }
+            file.close();
+            indexer++;
+        }
+
+        // sanity check — always verify a loader actually loaded
+        cout << "Loaded: " << ActivationPointInitalized.size()  << " activation points, "
+             << ConnectionsInitalized.size()                    << " connections, "
+             << NeuronInitalized.size()                         << " neurons, "
+             << SpikingNeuronInitalized.size()                  << " spiking neurons" << endl;
     }
+
 
 	void update() {
 		// update the state of the neurons and activation points based on the current tick

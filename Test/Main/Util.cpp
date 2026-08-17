@@ -12,6 +12,16 @@ public:
     const string CSVfileConnection = "Connection.csv"; // Connection.csv
     const string CSVfileNeuron = "Neuron.csv"; // Neuron.csv
     const string CSVfileSpikingNeuron = "SpikingNeuron.csv"; // SpikingNeuron.csv
+
+    vector<string> splitCSV(const string& line) {
+        vector<string> parts;
+        string token;
+        stringstream ss(line);
+        while (getline(ss, token, ',')) {
+            parts.push_back(token);
+        }
+        return parts;
+    }
 };
 
     /*
