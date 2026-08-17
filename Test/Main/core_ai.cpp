@@ -9,22 +9,22 @@ using namespace std;
 class StateStreamTransformer {
 public:
 
-	struct item {
+	struct Item {
 		int ID{}; // Identifier
 	};
 
-	struct Output : item {
+	struct Output : Item {
 		float threshold{};
 	};
 
 
-    struct Input : item {
+    struct Input : Item {
 		int tickPosition{}; // position in activation cycle, 0 is inactive, 1 is innitatied, beyond that follows the activation function
     };
 
-    struct Connection : item {
-        list<int> InputNeuronID{};
-        list<int> OutputNeuronID{};
+    struct Connection : Item {
+        list<int> inputNeuronID{};
+        list<int> outputNeuronID{};
         float weight{};
     };
 
@@ -46,10 +46,17 @@ public:
     };
 
 
-	list<ActivationPoint> ActivationPointInitalized;
-	list<Connection> ConnectionsInitalized;
-	list<Neuron> NeuronInitalized;
-	list<SpikingNeuron> SpikingNeuronInitalized;
+	// list<ActivationPoint> ActivationPointInitalized;
+	// list<Connection> ConnectionsInitalized;
+	// list<Neuron> NeuronInitalized;
+	// list<SpikingNeuron> SpikingNeuronInitalized;
+
+    struct Web {
+        list<ActivationPoint> ActivationPointInitalized;
+        list<Connection> ConnectionsInitalized;
+        list<Neuron> NeuronInitalized;
+        list<SpikingNeuron> SpikingNeuronInitalized;
+    } globalWeb;
 
 
     list<Connection> getConnections(Neuron n) {
@@ -60,7 +67,7 @@ public:
         return connections;
     }
 
-        void init() {
+    void init() {
         int indexer = 0;
 
         // FIX: braces make this a real list of 4 filenames.
@@ -91,30 +98,36 @@ public:
                     // "ActivationPoint* ap;" pointed at garbage; writing to it
                     // and then delete-ing it is an instant crash.
                     ActivationPoint ap;
-                    ap.ID        = stoi(split_view[0]);
-                    ap.threshold = stof(split_view[1]);
-                    ActivationPointInitalized.push_back(ap);
+                    ap.ID             = stoi(split_view[0]);
+                    ap.threshold      = stof(split_view[1]);
+                    ap.inputNeuronID  = stoi(splitSpecial(split_view[2]));
+                    globalWeb.ActivationPointInitalized.push_back(ap);
                     break;
                 }
                 case 1: { // Connection
                     Connection c;
-                    c.ID     = stoi(split_view[0]);   // FIX: stoi/stof were missing
-                    c.weight = stof(split_view[1]);
+                    c.ID             = stoi(split_view[0]);
+                    c.weight         = stof(split_view[1]);
+                    c.inputNeuronID  = stoi(splitSpecial(split_view[2]));
+                    c.outputNeuronID = stoi(splitSpecial(split_view[2]));
                     // columns 2+ would be your neuron ID lists, e.g. "1$2$3"
-                    ConnectionsInitalized.push_back(c);
+                    globalWeb.ConnectionsInitalized.push_back(c);
                     break;
                 }
                 case 2: { // Neuron
                     Neuron n;
-                    n.ID        = stoi(split_view[0]);
-                    n.threshold = stof(split_view[1]);
-                    NeuronInitalized.push_back(n);
+                    n.ID             = stoi(split_view[0]);
+                    n.threshold      = stof(split_view[1]);
+                    n.inputNeuronID  = stoi(splitSpecial(split_view[2]));
+                    n.outputNeuronID = stoi(splitSpecial(split_view[2]));
+                    globalWeb.NeuronInitalized.push_back(n);
                     break;
                 }
                 case 3: { // SpikingNeuron
                     SpikingNeuron sn;
-                    sn.ID = stoi(split_view[0]);
-                    SpikingNeuronInitalized.push_back(sn);
+                    sn.ID             = stoi(split_view[0]);
+                    sn.outputNeuronID = stoi(splitSpecial(split_view[2]));
+                    globalWeb.SpikingNeuronInitalized.push_back(sn);
                     break;
                 }
                 default:
@@ -127,12 +140,11 @@ public:
         }
 
         // sanity check — always verify a loader actually loaded
-        cout << "Loaded: " << ActivationPointInitalized.size()  << " activation points, "
-             << ConnectionsInitalized.size()                    << " connections, "
-             << NeuronInitalized.size()                         << " neurons, "
-             << SpikingNeuronInitalized.size()                  << " spiking neurons" << endl;
+        cout << "Loaded: " << globalWeb.ActivationPointInitalized.size()  << " activation points, "
+             << globalWeb.ConnectionsInitalized.size()                    << " connections, "
+             << globalWeb.NeuronInitalized.size()                         << " neurons, "
+             << globalWeb.SpikingNeuronInitalized.size()                  << " spiking neurons" << endl;
     }
-
 
 	void update() {
 		// update the state of the neurons and activation points based on the current tick
@@ -184,11 +196,14 @@ public:
         }
     }
 
-    int runTick() {
+    bool webT(Web web) {
         //
     }
 
+    bool webGrader(Web web) {}
+
     int run() {
+        //
         return 0;
     }
 };

@@ -22,6 +22,16 @@ public:
         }
         return parts;
     }
+
+    vector<string> splitSpecial(const string& line, char special) {
+        vector<string> parts;
+        string token;
+        stringstream ss(line);
+        while (getline(ss, token, special)) {
+            parts.push_back(token);
+        }
+        return parts;
+    }
 };
 
     /*
