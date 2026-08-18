@@ -1,9 +1,10 @@
 using namespace std;
-#include <list>
+#include <vector>
 #include <string>
 #include <cmath>
 #include <iostream>
 #include <fstream>
+#include <cstdlib>
 #include "Util.h"
 
 class StateStreamTransformer {
@@ -13,54 +14,46 @@ public:
 		int ID{}; // Identifier
 	};
 
-	struct Output : Item {
+	struct Output {
+        vector<int> outputItemID{};
 		float threshold{};
 	};
 
 
-    struct Input : Item {
+    struct Input {
+        vector<int> inputItemID{};
 		int tickPosition{}; // position in activation cycle, 0 is inactive, 1 is innitatied, beyond that follows the activation function
     };
 
-    struct Connection : Item {
-        list<int> inputNeuronID{};
-        list<int> outputNeuronID{};
+    struct Connection : Item, Input, Output {
         float weight{};
     };
 
-    struct SpikingNeuron : Input {
-		list<int> inputConnections;
+    struct SpikingNeuron : Item, Input {
 		bool active{}; // is active or not
     };
 
-    struct Neuron : Input, Output {
-        list<int> inputConnections;
-        list<int> outputConnections;
+    struct Neuron : Item, Input, Output {
         bool active{};
     };
 
-    struct ActivationPoint : Output {
-		list<int> outConnections;
+    struct ActivationPoint : Item, Output {
+		vector<int> outputItemID;
         int tickPosition{};
         bool active{};
     };
 
-
-	// list<ActivationPoint> ActivationPointInitalized;
-	// list<Connection> ConnectionsInitalized;
-	// list<Neuron> NeuronInitalized;
-	// list<SpikingNeuron> SpikingNeuronInitalized;
-
     struct Web {
-        list<ActivationPoint> ActivationPointInitalized;
-        list<Connection> ConnectionsInitalized;
-        list<Neuron> NeuronInitalized;
-        list<SpikingNeuron> SpikingNeuronInitalized;
+        vector<ActivationPoint> ActivationPointInitalized;
+        vector<Connection> ConnectionsInitalized;
+        vector<Neuron> NeuronInitalized;
+        vector<SpikingNeuron> SpikingNeuronInitalized;
+        int MaxConnections{};
     } globalWeb;
 
 
-    list<Connection> getConnections(Neuron n) {
-        list<Connection> connections;
+    vector<Connection> getConnections(Neuron n) {
+        vector<Connection> connections;
         for (Connection connect : connections) {
             connections.push_back(connect);
         }
@@ -70,15 +63,12 @@ public:
     void init() {
         int indexer = 0;
 
-        // FIX: braces make this a real list of 4 filenames.
-        // The comma version only ever iterated over the LAST one.
-        for (const string& fileName : { util.CSVfileActivationPoint,
-                                        util.CSVfileConnection,
-                                        util.CSVfileNeuron,
-                                        util.CSVfileSpikingNeuron }) {
+        for (const string& fileName : { Util.CSVfileActivationPoint,
+                                        Util.CSVfileConnection,
+                                        Util.CSVfileNeuron,
+                                        Util.CSVfileSpikingNeuron }) {
 
-            // FIX: join directory + filename with a separator
-            fstream file(util.CSVfileDir + "\\" + fileName);
+            fstream file(Util.CSVfileDir + "\\" + fileName);
             if (file.fail()) {
                 cout << "File " + fileName + " does not exist" << endl;
                 indexer++;
@@ -86,47 +76,42 @@ public:
             }
 
             string text;
-            // FIX: read EVERY line, not just the first
             while (getline(file, text)) {
                 if (text.empty()) continue;
 
-                vector<string> split_view = splitCSV(text);
+                vector<string> split_view = Util.splitCSV(text);
 
                 switch (indexer) {
-                case 0: { // ActivationPoint — FIX: braces around each case
-                    // FIX: stack object, not an uninitialized pointer.
-                    // "ActivationPoint* ap;" pointed at garbage; writing to it
-                    // and then delete-ing it is an instant crash.
+                case 0: { // ActivationPoint
                     ActivationPoint ap;
-                    ap.ID             = stoi(split_view[0]);
-                    ap.threshold      = stof(split_view[1]);
-                    ap.inputNeuronID  = stoi(splitSpecial(split_view[2]));
+                    ap.ID           = stoi(split_view[0]);
+                    ap.threshold    = stof(split_view[1]);
+                    ap.outputItemID = stoi(Ultimate.splitSpecial(split_view[2], '$'));
                     globalWeb.ActivationPointInitalized.push_back(ap);
                     break;
                 }
                 case 1: { // Connection
                     Connection c;
-                    c.ID             = stoi(split_view[0]);
-                    c.weight         = stof(split_view[1]);
-                    c.inputNeuronID  = stoi(splitSpecial(split_view[2]));
-                    c.outputNeuronID = stoi(splitSpecial(split_view[2]));
-                    // columns 2+ would be your neuron ID lists, e.g. "1$2$3"
+                    c.ID           = stoi(split_view[0]);
+                    c.weight       = stof(split_view[1]);
+                    c.inputItemID  = stoi(Util.splitSpecial(split_view[2], '$'));
+                    c.outputItemID = stoi(Util.splitSpecial(split_view[2], '$'));
                     globalWeb.ConnectionsInitalized.push_back(c);
                     break;
                 }
                 case 2: { // Neuron
                     Neuron n;
-                    n.ID             = stoi(split_view[0]);
-                    n.threshold      = stof(split_view[1]);
-                    n.inputNeuronID  = stoi(splitSpecial(split_view[2]));
-                    n.outputNeuronID = stoi(splitSpecial(split_view[2]));
+                    n.ID           = stoi(split_view[0]);
+                    n.threshold    = stof(split_view[1]);
+                    n.inputItemID  = stoi(Util.splitSpecial(split_view[2], '$'));
+                    n.outputItemID = stoi(Util.splitSpecial(split_view[2], '$'));
                     globalWeb.NeuronInitalized.push_back(n);
                     break;
                 }
                 case 3: { // SpikingNeuron
                     SpikingNeuron sn;
-                    sn.ID             = stoi(split_view[0]);
-                    sn.outputNeuronID = stoi(splitSpecial(split_view[2]));
+                    sn.ID          = stoi(split_view[0]);
+                    sn.inputItemID = stoi(Util.splitSpecial(split_view[2], '$'));
                     globalWeb.SpikingNeuronInitalized.push_back(sn);
                     break;
                 }
@@ -140,10 +125,11 @@ public:
         }
 
         // sanity check — always verify a loader actually loaded
-        cout << "Loaded: " << globalWeb.ActivationPointInitalized.size()  << " activation points, "
-             << globalWeb.ConnectionsInitalized.size()                    << " connections, "
-             << globalWeb.NeuronInitalized.size()                         << " neurons, "
-             << globalWeb.SpikingNeuronInitalized.size()                  << " spiking neurons" << endl;
+        cout << "Loaded: "                                 << endl
+             << globalWeb.ActivationPointInitalized.size() << " activation points, " << endl
+             << globalWeb.ConnectionsInitalized.size()     << " connections, "       << endl
+             << globalWeb.NeuronInitalized.size()          << " neurons, "           << endl
+             << globalWeb.SpikingNeuronInitalized.size()   << " spiking neurons"     << endl;
     }
 
 	void update() {
@@ -151,7 +137,51 @@ public:
 		return;
 	}
 
-    float activationFunc(int& tickPosition) {
+    void deleteInputConnection(Input& inputConnect) {
+        for (:) {
+            //
+        }
+    }
+
+    void newInputConnection(Web& web, Input& inputConnect, char connectTo, int deleteConnection) {
+        vector<int> currentConnections = inputConnect.inputItemID;
+        vector<int> k;
+
+        switch(connectTo) {
+            case 'a' : {
+                for (ActivationPoint ap : web.ActivationPointInitalized) {
+                    k.push_back(ap.ID);
+                }
+            }
+            case 'n' : {
+                for (Neuron n : web.NeuronInitalized) {
+                    k.push_back(n.ID);
+                }
+            }
+            default : {
+                cout << "connectTo is invalid.";
+            }
+        }
+
+        for (int i : currentConnections) {
+            //
+        }
+    }
+
+    void initNewNetwork(Web& web, int activationPointCount, int connectionCount, int neuronCount, int spikingNeuronCount, int MaxConnection, char typeOfMaxConnections) {
+        switch (typeOfMaxConnections) {
+            case 'i': {
+                // int
+                web.MaxConnections = MaxConnection;
+            }
+            case '%': {
+                // percentage
+                web.MaxConnections = (int)(MaxConnection / neuronCount);
+            }
+        }
+    }
+
+    float activationFunc(int tickPosition) {
         // constant vars
         float tickOffset = 1.0f; // for testing
         float r = 1.04; // Magic number yay
@@ -171,7 +201,7 @@ public:
         return hump - dip;
     }
 
-    float neuron(float input, Neuron n, int currentTick) {
+    float neuron(float input, Neuron& n, int currentTick) {
         int p = activationFunc(n.tickPosition);
 
         if (n.tickPosition == 0) { // init

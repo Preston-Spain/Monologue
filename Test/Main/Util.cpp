@@ -2,10 +2,13 @@
 #include <list>
 #include <string>
 #include <cmath>
+#include <vector>
+#include <string>
+
 
 using namespace std;
 
-class Ultimate {
+class Util {
 public:
     const string CSVfileDir = "D:\\Project\\Monologue\\Test\\Main\\csv"; // D:\\Project\\Monologue\\Test\\Main\\csv
     const string CSVfileActivationPoint = "ActivationPoint.csv"; // ActivationPoint.csv
