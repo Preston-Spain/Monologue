@@ -13,20 +13,21 @@ public:
 	struct Item {
 		int ID{}; // Identifier
 	};
+    
+    struct Connection : Item {
+        float weight{};
+        int inputItemID{};
+        int outputItemID{};
+    };
 
 	struct Output {
         vector<int> outputItemID{};
 		float threshold{};
 	};
 
-
     struct Input {
         vector<int> inputItemID{};
 		int tickPosition{}; // position in activation cycle, 0 is inactive, 1 is innitatied, beyond that follows the activation function
-    };
-
-    struct Connection : Item, Input, Output {
-        float weight{};
     };
 
     struct SpikingNeuron : Item, Input {
@@ -51,24 +52,73 @@ public:
         int MaxConnections{};
     } globalWeb;
 
-
-    vector<Connection> getConnections(Neuron n) {
-        vector<Connection> connections;
-        for (Connection connect : connections) {
-            connections.push_back(connect);
+    ActivationPoint IDtoActivationPoint(int ID) {
+        for (ActivationPoint c : globalWeb.ActivationPointInitalized) {
+            if (c.ID == ID) {
+                return c;
+            }
         }
-        return connections;
+        return {};
+    }
+
+    Connection IDtoConnection(int ID) {
+        for (Connection c : globalWeb.ConnectionsInitalized) {
+            if (c.ID == ID) {
+                return c;
+            }
+        }
+        return {};
+    }
+
+    Neuron IDtoNeuron(int ID) {
+        for (Neuron c : globalWeb.NeuronInitalized) {
+            if (c.ID == ID) {
+                return c;
+            }
+        }
+        return {};
+    }
+
+    SpikingNeuron IDtoSpikingNeuron(int ID) {
+        for (SpikingNeuron c : globalWeb.SpikingNeuronInitalized) {
+            if (c.ID == ID) {
+                return c;
+            }
+        }
+        return {};
+    }
+
+    vector<int> getInputConnectionsID(Input input) {
+        if (input.inputItemID.empty()) {
+            return {};
+        }
+        vector<int> inputConnections;
+        for (int i : input.inputItemID) {
+            inputConnections.push_back(i);
+        }
+        return inputConnections;
+    }
+
+    int getConnectionID(Input input, Output target) {
+        int ID;
+        for (int connectID : getInputConnectionsID(input)) {
+            Connection connect = IDtoConnection(connectID);
+            if ((input == connect.inputItemID) && (target == connect.outputItemID)) { // ! needs to be output to output not output to int, and specification on which type it is
+                ID = connect.ID;
+            }
+        }
+        return ID;
     }
 
     void init() {
         int indexer = 0;
 
-        for (const string& fileName : { Util.CSVfileActivationPoint,
-                                        Util.CSVfileConnection,
-                                        Util.CSVfileNeuron,
-                                        Util.CSVfileSpikingNeuron }) {
+        for (const string& fileName : { Ultimate.CSVfileActivationPoint,
+                                        Ultimate.CSVfileConnection,
+                                        Ultimate.CSVfileNeuron,
+                                        Ultimate.CSVfileSpikingNeuron }) {
 
-            fstream file(Util.CSVfileDir + "\\" + fileName);
+            fstream file(Ultimate.CSVfileDir + "\\" + fileName);
             if (file.fail()) {
                 cout << "File " + fileName + " does not exist" << endl;
                 indexer++;
@@ -79,7 +129,7 @@ public:
             while (getline(file, text)) {
                 if (text.empty()) continue;
 
-                vector<string> split_view = Util.splitCSV(text);
+                vector<string> split_view = Ultimate.splitCSV(text);
 
                 switch (indexer) {
                 case 0: { // ActivationPoint
@@ -94,8 +144,8 @@ public:
                     Connection c;
                     c.ID           = stoi(split_view[0]);
                     c.weight       = stof(split_view[1]);
-                    c.inputItemID  = stoi(Util.splitSpecial(split_view[2], '$'));
-                    c.outputItemID = stoi(Util.splitSpecial(split_view[2], '$'));
+                    c.inputItemID  = stoi(Ultimate.splitSpecial(split_view[2], '$'));
+                    c.outputItemID = stoi(Ultimate.splitSpecial(split_view[2], '$'));
                     globalWeb.ConnectionsInitalized.push_back(c);
                     break;
                 }
@@ -103,15 +153,15 @@ public:
                     Neuron n;
                     n.ID           = stoi(split_view[0]);
                     n.threshold    = stof(split_view[1]);
-                    n.inputItemID  = stoi(Util.splitSpecial(split_view[2], '$'));
-                    n.outputItemID = stoi(Util.splitSpecial(split_view[2], '$'));
+                    n.inputItemID  = stoi(Ultimate.splitSpecial(split_view[2], '$'));
+                    n.outputItemID = stoi(Ultimate.splitSpecial(split_view[2], '$'));
                     globalWeb.NeuronInitalized.push_back(n);
                     break;
                 }
                 case 3: { // SpikingNeuron
                     SpikingNeuron sn;
                     sn.ID          = stoi(split_view[0]);
-                    sn.inputItemID = stoi(Util.splitSpecial(split_view[2], '$'));
+                    sn.inputItemID = stoi(Ultimate.splitSpecial(split_view[2], '$'));
                     globalWeb.SpikingNeuronInitalized.push_back(sn);
                     break;
                 }
