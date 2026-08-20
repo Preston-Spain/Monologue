@@ -18,6 +18,8 @@ public:
         float weight{};
         int inputItemIDs{};
         int outputItemIDs{};
+        int firedCount{};
+        int succeededCount{};
     };
 
 	struct Output {
@@ -32,17 +34,21 @@ public:
 
     struct SpikingNeuron : Item, Output {
 		bool active{}; // is active or not
+        int firedCount{};
     };
 
     struct Neuron : Item, Input, Output {
         float weight{};
         bool active{};
+        int firedCount{};
+        int subthresholdCount{};
     };
 
     struct ActivationPoint : Item, Input {
 		vector<int> outputItemIDs;
         int tickPosition{};
         bool active{};
+        int inputCount{};
     };
 
     struct Web {
