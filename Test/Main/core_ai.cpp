@@ -16,30 +16,31 @@ public:
     
     struct Connection : Item {
         float weight{};
-        int inputItemID{};
-        int outputItemID{};
+        int inputItemIDs{};
+        int outputItemIDs{};
     };
 
 	struct Output {
-        vector<int> outputItemID{};
-		float threshold{};
+        vector<int> outputItemIDs{};
 	};
 
     struct Input {
-        vector<int> inputItemID{};
+        vector<int> inputItemIDs{};
+		float threshold{};
 		int tickPosition{}; // position in activation cycle, 0 is inactive, 1 is innitatied, beyond that follows the activation function
     };
 
-    struct SpikingNeuron : Item, Input {
+    struct SpikingNeuron : Item, Output {
 		bool active{}; // is active or not
     };
 
     struct Neuron : Item, Input, Output {
+        float weight{};
         bool active{};
     };
 
-    struct ActivationPoint : Item, Output {
-		vector<int> outputItemID;
+    struct ActivationPoint : Item, Input {
+		vector<int> outputItemIDs;
         int tickPosition{};
         bool active{};
     };
@@ -89,21 +90,44 @@ public:
     }
 
     vector<int> getInputConnectionsID(Input input) {
-        if (input.inputItemID.empty()) {
+        if (input.inputItemIDs.empty()) {
             return {};
         }
         vector<int> inputConnections;
-        for (int i : input.inputItemID) {
+        for (int i : input.inputItemIDs) {
             inputConnections.push_back(i);
         }
         return inputConnections;
     }
 
-    int getConnectionID(Input input, Output target) {
+    // Connection funcs
+    int getConnectionID(Neuron input, Neuron target) {
         int ID;
         for (int connectID : getInputConnectionsID(input)) {
             Connection connect = IDtoConnection(connectID);
-            if ((input == connect.inputItemID) && (target == connect.outputItemID)) { // ! needs to be output to output not output to int, and specification on which type it is
+            if ((input.ID == connect.inputItemIDs) && (target.ID == connect.outputItemIDs)) { 
+                ID = connect.ID;
+            }
+        }
+        return ID;
+    }
+
+    int getConnectionID(SpikingNeuron input, Neuron target) {
+        int ID;
+        for (int connectID : getInputConnectionsID(input)) {
+            Connection connect = IDtoConnection(connectID);
+            if ((input.ID == connect.inputItemIDs) && (target.ID == connect.outputItemIDs)) { 
+                ID = connect.ID;
+            }
+        }
+        return ID;
+    }
+
+    int getConnectionID(Neuron input, ActivationPoint target) {
+        int ID;
+        for (int connectID : getInputConnectionsID(input)) {
+            Connection connect = IDtoConnection(connectID);
+            if ((input.ID == connect.inputItemIDs) && (target.ID == connect.outputItemIDs)) { 
                 ID = connect.ID;
             }
         }
@@ -134,34 +158,34 @@ public:
                 switch (indexer) {
                 case 0: { // ActivationPoint
                     ActivationPoint ap;
-                    ap.ID           = stoi(split_view[0]);
-                    ap.threshold    = stof(split_view[1]);
-                    ap.outputItemID = stoi(Ultimate.splitSpecial(split_view[2], '$'));
+                    ap.ID            = stoi(split_view[0]);
+                    ap.threshold     = stof(split_view[1]);
+                    ap.outputItemIDs = stoi(Ultimate.splitSpecial(split_view[2], '$'));
                     globalWeb.ActivationPointInitalized.push_back(ap);
                     break;
                 }
                 case 1: { // Connection
                     Connection c;
-                    c.ID           = stoi(split_view[0]);
-                    c.weight       = stof(split_view[1]);
-                    c.inputItemID  = stoi(Ultimate.splitSpecial(split_view[2], '$'));
-                    c.outputItemID = stoi(Ultimate.splitSpecial(split_view[2], '$'));
+                    c.ID            = stoi(split_view[0]);
+                    c.weight        = stof(split_view[1]);
+                    c.inputItemIDs  = stoi(Ultimate.splitSpecial(split_view[2], '$'));
+                    c.outputItemIDs = stoi(Ultimate.splitSpecial(split_view[2], '$'));
                     globalWeb.ConnectionsInitalized.push_back(c);
                     break;
                 }
                 case 2: { // Neuron
                     Neuron n;
-                    n.ID           = stoi(split_view[0]);
-                    n.threshold    = stof(split_view[1]);
-                    n.inputItemID  = stoi(Ultimate.splitSpecial(split_view[2], '$'));
-                    n.outputItemID = stoi(Ultimate.splitSpecial(split_view[2], '$'));
+                    n.ID            = stoi(split_view[0]);
+                    n.threshold     = stof(split_view[1]);
+                    n.inputItemIDs  = stoi(Ultimate.splitSpecial(split_view[2], '$'));
+                    n.outputItemIDs = stoi(Ultimate.splitSpecial(split_view[2], '$'));
                     globalWeb.NeuronInitalized.push_back(n);
                     break;
                 }
                 case 3: { // SpikingNeuron
                     SpikingNeuron sn;
-                    sn.ID          = stoi(split_view[0]);
-                    sn.inputItemID = stoi(Ultimate.splitSpecial(split_view[2], '$'));
+                    sn.ID           = stoi(split_view[0]);
+                    sn.inputItemIDs = stoi(Ultimate.splitSpecial(split_view[2], '$'));
                     globalWeb.SpikingNeuronInitalized.push_back(sn);
                     break;
                 }
@@ -187,14 +211,50 @@ public:
 		return;
 	}
 
-    void deleteInputConnection(Input& inputConnect) {
-        for (:) {
-            //
+    void deleteConnection(Input& inputConnect, int connectionID) {
+        vector<int> k = inputConnect.inputItemIDs;
+        bool h = false;
+        for (int i : inputConnect.inputItemIDs) {
+            if (!connectionID == i) {
+                k.push_back(i);
+            } else {
+                h = true;
+            }
+        }
+        if (h) {
+            cout << "No connection with " + std::to_string(connectionID) + " existed.";
+        }
+        while(inputConnect.inputItemIDs.empty() == 0) {
+            inputConnect.inputItemIDs.pop_back();
+        }
+        for (int l : k) {
+            inputConnect.inputItemIDs.push_back(l);
+        }
+    }
+
+    void deleteConnection(Output& outputConnect, int connectionID) {
+        vector<int> k = outputConnect.outputItemIDs;
+        bool h = false;
+        for (int i : outputConnect.outputItemIDs) {
+            if (!connectionID == i) {
+                k.push_back(i);
+            } else {
+                h = true;
+            }
+        }
+        if (h) {
+            cout << "No connection with " + std::to_string(connectionID) + " existed.";
+        }
+        while(outputConnect.outputItemIDs.empty() == 0) {
+            outputConnect.outputItemIDs.pop_back();
+        }
+        for (int l : k) {
+            outputConnect.outputItemIDs.push_back(l);
         }
     }
 
     void newInputConnection(Web& web, Input& inputConnect, char connectTo, int deleteConnection) {
-        vector<int> currentConnections = inputConnect.inputItemID;
+        vector<int> currentConnections = inputConnect.inputItemIDs;
         vector<int> k;
 
         switch(connectTo) {
@@ -215,6 +275,27 @@ public:
 
         for (int i : currentConnections) {
             //
+        }
+    }
+
+    void newOutputConnection(Web& web, Output& outputConnect, char connectTo, int deleteConnection) {
+        vector<int> currentConnections = outputConnect.outputItemIDs;
+        vector<int> k;
+
+        switch(connectTo) {
+            case 's' : {
+                for (SpikingNeuron sn : web.SpikingNeuronInitalized) {
+                    k.push_back(sn.ID);
+                }
+            }
+            case 'n' : {
+                for (Neuron n : web.NeuronInitalized) {
+                    k.push_back(n.ID);
+                }
+            }
+            default : {
+                cout << "connectTo is invalid.";
+            }
         }
     }
 
@@ -252,7 +333,7 @@ public:
     }
 
     float neuron(float input, Neuron& n, int currentTick) {
-        int p = activationFunc(n.tickPosition);
+        float p = n.weight * activationFunc(n.tickPosition);
 
         if (n.tickPosition == 0) { // init
             if (input >= n.threshold) {
