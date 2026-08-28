@@ -70,6 +70,7 @@ public:
             vector<Connection> ConnectionsInitalized;
             vector<Neuron> NeuronInitalized;
             vector<SpikingNeuron> SpikingNeuronInitalized;
+            unordered_map<int, char> GlobalIDList; // (a:ActivationPoint, c:Connections, n:Neuron, s:SpikingNeuron)
             int MaxConnections{};
         } globalWeb;
 
@@ -78,6 +79,21 @@ public:
             vector<int> contributingConnections;
         };
     //
+
+    unordered_map<int, char> getHashOf(unordered_map<int, char> hash, char type) {
+        unordered_map<int, char> helperHash;
+            for (auto i : hash) {
+                if (type == i.second) {
+                    helperHash[i.first] = i.second;
+                }
+            }
+        return helperHash;
+    }
+    //
+
+    int allocateID(Web& web) {
+        
+    }
 
     // ID to object mapping
         ActivationPoint IDtoActivationPoint(int ID) {
@@ -148,6 +164,15 @@ public:
             return true;
         }
         return false;
+    }
+
+    int addActivationPoint(Web& web, float threshold) {
+        ActivationPoint ap;
+        ap.globalID = allocateID();
+        ap.threshold = threshold;
+        web.ActivationPointInitalized.push_back(ap);
+        cout << "Added ActivationPoint " << ap.globalID << " (threshold=" << threshold << ")" << endl;
+        return ap.globalID;
     }
 
     void activationPoint(float input, ActivationPoint& ap) {
@@ -532,15 +557,6 @@ public:
         web.SpikingNeuronInitalized.push_back(sn);
         cout << "Added random SpikingNeuron " << sn.globalID << " (period=" << sn.period << ")" << endl;
         return sn.globalID;
-    }
-
-    int addActivationPoint(Web& web, float threshold) {
-        ActivationPoint ap;
-        ap.globalID = allocateID();
-        ap.threshold = threshold;
-        web.ActivationPointInitalized.push_back(ap);
-        cout << "Added ActivationPoint " << ap.globalID << " (threshold=" << threshold << ")" << endl;
-        return ap.globalID;
     }
 
     void resetWeb(Web& web) {
