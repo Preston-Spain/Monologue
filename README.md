@@ -1,5 +1,6 @@
 # Monologue
-
+Stage of developement: Pre-Alpha 0.0.1
+git update tag: feet:()Pre-Alpha 0.0.1
 ## Neural Network
 I have made this janky network from scratch. From the activation function, which is a simplified clone of a corvids neural activity, to the network connection.
 

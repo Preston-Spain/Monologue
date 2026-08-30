@@ -1,5 +1,5 @@
-#ifndef UTIL_H
-#define UTIL_H
+#ifndef CORE_AI_H
+#define CORE_AI_H
 
 #include <vector>
 #include <string>
@@ -8,6 +8,12 @@ extern bool runAI;
 
 class StateStreamTransformer {
 public:
-    run();
+    int activationPointCount();
+    void load();
+    bool webGrader();
+    void update();
+    void resetWeb();
+    int run();
+    void runOscillationTest();
 };
 #endif

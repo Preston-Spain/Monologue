@@ -1,6 +1,7 @@
 #include "Util.h"
 #include <iostream>
 #include <sstream>
+#include <random>
 
 using namespace std;
 
@@ -9,7 +10,8 @@ Util::Util()
       CSVfileActivationPoint("ActivationPoint.csv"),
       CSVfileConnection("Connection.csv"),
       CSVfileNeuron("Neuron.csv"),
-      CSVfileSpikingNeuron("SpikingNeuron.csv")
+      CSVfileSpikingNeuron("SpikingNeuron.csv"),
+      rng(std::random_device{}())
 {}
 
 vector<string> Util::splitCSV(const string& line) {
@@ -28,11 +30,9 @@ vector<string> Util::splitSpecial(const string& line, char special) {
     return parts;
 }
 
-// bool Util::yesNoPrompt(const string& prompt) {
-//     string input;
-//     cout << prompt << " (y/n): ";
-//     cin >> input;
-//     return (input == "y" || input == "Y");
-// }
+float Util::randomFloat(float lo, float hi) {
+    std::uniform_real_distribution<float> dist(lo, hi);
+    return dist(rng);
+}
 
 bool runAI = false;

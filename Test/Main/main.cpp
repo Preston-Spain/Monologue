@@ -15,7 +15,7 @@ int main() {
     std::vector<float> exportBuffer(engine.activationPointCount(), 0.0f);
 
     try {
-        engine.run(runAI, &exportBuffer);
+        engine.run();
     } catch (const std::exception& e) {
         std::cerr << "run() failed: " << e.what() << std::endl;
         return 1;

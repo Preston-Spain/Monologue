@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <random>
 
 extern bool runAI;
 
@@ -15,10 +16,13 @@ public:
     const std::string CSVfileSpikingNeuron;
 
     bool runAI;
+    std::mt19937 rng;
 
     Util(); // constructor declared, not defined here
 
     std::vector<std::string> splitCSV(const std::string& line);
-    std::vector<std::string> splitSpecial(const std::string& line, char special);};
+    std::vector<std::string> splitSpecial(const std::string& line, char special);
+    float randomFloat(float lo, float hi);
+};
 
 #endif
