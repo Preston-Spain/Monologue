@@ -522,7 +522,7 @@ public:
         c.activityScore = decay * c.activityScore + (1.0f - decay) * instant;
     }
 
-    int addRandomNeuron(Web& globalWeb) {
+    int addRandomNeuron() {
         Neuron n;
         n.ID = allocateID();
         n.threshold = util.randomFloat(0.2f, 0.8f);
@@ -533,7 +533,7 @@ public:
         return n.ID;
     }
 
-    int addRandomSpikingNeuron(Web& globalWeb) {
+    int addRandomSpikingNeuron() {
         SpikingNeuron sn;
         sn.ID = allocateID();
         sn.period = 2 + (int)(util.rng() % 6); // fires somewhere every 2-7 ticks
@@ -551,7 +551,7 @@ public:
         return ap.ID;
     }
 
-    void resetWeb(Web& globalWeb) {
+    void resetWeb() {
         globalWeb.ActivationPointInitalized.clear();
         globalWeb.ConnectionsInitalized.clear();
         globalWeb.NeuronInitalized.clear();
@@ -610,7 +610,7 @@ public:
         return true;
     }
 
-    bool webGrader(Web& globalWeb) {
+    bool webGrader() {
         static int ticksSinceLastGrowth = 0;
         const int GROWTH_COOLDOWN_TICKS = 25;
 
@@ -708,7 +708,7 @@ public:
     }
 
     void runOscillationTest() {
-        resetWeb(globalWeb);
+        resetWeb();
 
         SpikingNeuron snA; snA.ID = allocateID(); snA.period = 4;
         SpikingNeuron snB; snB.ID = allocateID(); snB.period = 4;
